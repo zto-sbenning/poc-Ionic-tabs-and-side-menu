@@ -5,24 +5,17 @@ import { Sample1Page } from '../../pages/sample1/sample1';
 import { Sample3Page } from '../../pages/sample3/sample3';
 import { Sample2Page } from '../../pages/sample2/sample2';
 import { BehaviorSubject, Subject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export interface NavigationPage {
   componentName: any;
   displayName: string;
-  hasSideMenuEntry?: boolean;
-  sideMenuIndex?: number;
-  hasTabsBarEntry?: boolean;
-  tabsBarIndex?: number;
   displayIcon?: string;
   data?: any;
+  sideMenuIndex?: number;
+  tabsBarIndex?: number;
+  showInSideMenu?: boolean;
+  showInTabsBar?: boolean;
 }
-
-const onlySideMenuPages = (page: NavigationPage) => page.hasSideMenuEntry;
-const onlyTabsBarPages = (page: NavigationPage) => page.hasTabsBarEntry;
-
-const mapOnlySideMenuPages = (pages: NavigationPage[]) => pages.filter(onlySideMenuPages);
-const mapOnlyTabsBarPages = (pages: NavigationPage[]) => pages.filter(onlyTabsBarPages);
 
 const findByComponentName = (componentName: any) => (page: NavigationPage) => page.componentName === componentName;
 
@@ -36,50 +29,35 @@ const findByComponentName = (componentName: any) => (page: NavigationPage) => pa
 export class NavigationProvider {
 
   private pages: NavigationPage[] = [
-    {componentName: HomePage, displayName: 'Home', displayIcon: 'home', hasSideMenuEntry: true, sideMenuIndex: 0, hasTabsBarEntry: true, tabsBarIndex: 0},
-    {componentName: ListPage, displayName: 'List', displayIcon: 'home', hasSideMenuEntry: true, sideMenuIndex: 1, hasTabsBarEntry: true, tabsBarIndex: 1},
-    {componentName: Sample1Page, displayName: 'Sample 1', displayIcon: 'add', hasSideMenuEntry: true, sideMenuIndex: 2, hasTabsBarEntry: false},
-    {componentName: Sample2Page, displayName: 'Sample 2', displayIcon: 'alarm', hasSideMenuEntry: false, hasTabsBarEntry: true, tabsBarIndex: 2},
-    {componentName: Sample3Page, displayName: 'Sample 3', displayIcon: 'add-circle'},
+    {componentName: HomePage, displayName: 'Home', displayIcon: 'home', sideMenuIndex: 0, tabsBarIndex: 0, showInSideMenu: true, showInTabsBar: true},
+    {componentName: ListPage, displayName: 'List', displayIcon: 'home', sideMenuIndex: 1, tabsBarIndex: 1, showInSideMenu: true, showInTabsBar: true},
+    {componentName: Sample1Page, displayName: 'Sample 1', displayIcon: 'add', sideMenuIndex: 2, tabsBarIndex: 2, showInSideMenu: true, showInTabsBar: true},
+    {componentName: Sample2Page, displayName: 'Sample 2', displayIcon: 'alarm', sideMenuIndex: 3, tabsBarIndex: 3, showInSideMenu: false, showInTabsBar: true},
+    {componentName: Sample3Page, displayName: 'Sample 3', displayIcon: 'add-circle', sideMenuIndex: 4, tabsBarIndex: 4, showInSideMenu: true, showInTabsBar: false},
   ];
 
-  private pagesNotifier: BehaviorSubject <NavigationPage[]>;
-  private openNotifier: Subject <NavigationPage>;
+  // Replay last emission to each new subscriber on subscription
+  private pagesListNotifier: BehaviorSubject <NavigationPage[]>;
+  // Subscribers get only emission that happens after it's subscription
+  private openPageActionsNotifier: Subject <NavigationPage>;
 
-  pages$: Observable<NavigationPage[]>;
-  sideMenuPages$: Observable<NavigationPage[]>;
-  tabsBarPages$: Observable<NavigationPage[]>;
-
-  openPage$: Observable<NavigationPage>;
+  pagesList$: Observable<NavigationPage[]>;
+  openPageActions$: Observable<NavigationPage>;
 
   constructor() {
     console.log('Hello NavigationProvider Provider');
-    this.pagesNotifier = new BehaviorSubject(this.pages);
-    this.openNotifier = new Subject;
-    this.pages$ = this.pagesNotifier.asObservable();
-    this.sideMenuPages$ = this.pages$.pipe(map(mapOnlySideMenuPages));
-    this.tabsBarPages$ = this.pages$.pipe(map(mapOnlyTabsBarPages));
-    this.openPage$ = this.openNotifier.asObservable();
+    this.pagesListNotifier = new BehaviorSubject(this.pages);
+    this.openPageActionsNotifier = new Subject;
+    this.pagesList$ = this.pagesListNotifier.asObservable();
+    this.openPageActions$ = this.openPageActionsNotifier.asObservable();
   }
 
-  private nofify() {
-    this.pagesNotifier.next(this.pages);
-  }
-
-  changes(page: NavigationPage) {
-    const index = this.pages.findIndex((page: NavigationPage) => page.componentName === page.componentName);
-    if (index < 0) {
-      throw new Error(`Page (${page.displayName}) not found in NavigationProvider@pages.`);
-    }
-    this.pages[index] = page;
-  }
-
-  open(componentName: any) {
+  openPage(componentName: any) {
     const page: NavigationPage = this.pages.find(findByComponentName(componentName));
     if (!page) {
       throw new Error(`Page (${componentName ? componentName.toString() : 'Unknow'}) not found in NavigationProvider@pages.`);
     }
-    this.openNotifier.next(page);
+    this.openPageActionsNotifier.next(page);
   }
 
 }

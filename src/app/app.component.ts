@@ -6,6 +6,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { Observable } from 'rxjs';
 import { NavigationPage, NavigationProvider } from '../providers/navigation/navigation';
 import { TabsPage } from '../pages/tabs/tabs';
+import { map } from 'rxjs/operators';
 
 const sortPages = (page1: NavigationPage, page2: NavigationPage) => page1.sideMenuIndex - page2.sideMenuIndex;
 const mapSort = (pages: NavigationPage[]) => pages.sort(sortPages);
@@ -18,7 +19,7 @@ export class MyApp {
 
   rootPage: any = TabsPage;
 
-  pages$: Observable<NavigationPage[]> = this.navigationProvider.sideMenuPages$.map(mapSort);
+  pages$: Observable<NavigationPage[]> = this.navigationProvider.pagesList$.pipe(map(mapSort));
 
   constructor(
     public platform: Platform,
@@ -39,7 +40,7 @@ export class MyApp {
   }
 
   openPage(page: NavigationPage) {
-    this.navigationProvider.open(page.componentName);
+    this.navigationProvider.openPage(page.componentName);
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
     // this.nav.setRoot(page.component);
