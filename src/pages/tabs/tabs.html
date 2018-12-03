@@ -1,0 +1,4 @@
+<ion-tabs #tabs>
+  <ion-tab [show]="false" [root]="pageWithoutTabsEntry?.componentName"></ion-tab>
+  <ion-tab *ngFor="let p of pages$|async" [root]="p.componentName" tabTitle="{{ p.displayName }}" tabIcon="{{ p.displayIcon }}"></ion-tab>
+</ion-tabs>
